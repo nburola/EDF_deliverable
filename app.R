@@ -24,7 +24,7 @@ alldata <- read_csv(here("raw_data", "alldata_combined.csv")) %>%
 
 #Constructing the basic user interface (UI) with the shinydashboard package 
 ui <- navbarPage("Navigation Bar", 
-                 theme = shinythemes("yeti"), 
+                 theme = shinytheme("yeti"), 
                  tabPanel("Introduction", 
                           h1("Some giant text"), 
                           p("Here is some regular text")), 
@@ -40,7 +40,7 @@ ui <- navbarPage("Navigation Bar",
                 mainPanel("Main Panel Text"))
 
 #Writing the server function line of code that connects inputs to outputs 
-server <- function(input, output) 
+server <- function(input, output) ({})
 
 #Writing the line of code that connects the UI to the server 
 shinyApp(ui = ui, server = server)
