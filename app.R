@@ -32,16 +32,19 @@ fishe <- read_csv(here::here("raw_data", "alldata_combined.csv"))
 
 ui <- fluidPage(
   theme = shinytheme("darkly"),
-  titlePanel("Evaluationg Adaptive Management Strategies for Climate-Resilient Fisheries"),
+  titlePanel("Evaluating Adaptive Management Strategies for Climate Resilient Fisheries"),
   tabsetPanel(
     tabPanel("Introduction",
              strong(h3("About the Project (Background)", style = "color:steelblue; font-family:Helvetica")),
-             em(strong(h4("What is EDF and what are they doing with data-limited fisheries management?", style = "color:skyblue"))), 
-             p("content"),
+             em(strong(h4("What is the Enviromental Defense Fund (EDF) and what are they doing with data-limited fisheries management?", style = "color:skyblue"))), 
+             tags$img(src = "EDF.jpeg", height = "100px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
+             p("EDF is a nonprofit environmental advocacy group known for working on issues such as global warming, ecosystem restoration, and oceans. Despite the immense value of fisheries, the majority of global fisheries lack the appropriate data to utilize conventional scientific stock assessment methods. With these data-limited fisheries, EDF has developed the Framework for Integrated Stock and Habitat Evaluation (FISHE). The goal of this framework is to provide scientific guidance to fisheries managers with minimal resources in 11 steps. Each step of the framework is designed to promote the sustainable management of data-limited fisheries"),
              br(),
              
              em(strong(h4("How is climate change accounted for in the FISHE framework?", style = "color:skyblue"))),
-             p("content"),
+             tags$img(src = "FISHE.png", height = "300px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
+             p("FISHE is designed to capture the inherently dynamic nature of fisheries. It was not designed to address expected 
+environmental changes stemming from global climate change. As climate change has already started to impact fish stocks worldwide, it is imperative that FISHE be robust to climate-induced variations. In addition, the framework also needs to minimize environmental and economic risk"),
              br(),
              
              em(strong(h4("Which parts of FISHE are most likely going to be affected by climate change?", style = "color:skyblue"))),
