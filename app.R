@@ -108,7 +108,20 @@ environmental changes stemming from global climate change. As climate change has
              br(),
              
              em(strong(h4("What case studies can we utilize to show the efficiency of FISHE in other countries?", style = "color:skyblue"))),
-             p("contents")
+             p("To assist with implementing FISHE, EDF has a 
+hypothetical case study concerning a nearshore tropical reef fishery in the Carribbean. Fishing is important to this Carribbean island country both economically and culturally. There is serious concern about the depletion of finfish in its nearshore multi-species tropical reef fish fishery. Outside fishing pressure from nearby islands and other countries has placed additional unaccounted-for-stress on finfish populations. Data has proved unreliable for conducting sound fishery management assessments and thus FISHE has been called in to come up with a solid plan"), 
+             br(), 
+             p("Step 1: Goal Setting: the goals for this fishery include producing good but not necessarily maximum yields from the main target fisheries, providing good dive tourism and recreational fishing experiences, and maintaining the coral reef ecosystem that supports fishing and tourism by rebuilding depleted stocks and maintaining total fish biomass at appropriate levels. "),
+             br(), 
+             p("Step 2: Ecosystem Assessment: the ecosystem seems relatively healthy, receiving a score > 0.5 but < 1.0 (score between 0.5-1.0 indicates that coral cover, fish species richness, and the presence of grazers and invertivores are at healthy levels)"), 
+             br(), 
+             p("Step 3: Vulnerability Assessment: a Productivity Susceptibility Analysis (PSA) was conducted on 29 fish species targeted by the finish fishery to assess the vulnerability of each species."), 
+             br(), 
+             p("Step 4: Inital Stock Assessment: assessing the status of individual fish targets with a focus on highly vulnerable to overfishing targets: Goliath grouper, Nassau grouper, and red snapper."), 
+             br(), 
+             p("Step 5: Priortization: After organizing the priority table for all three highly vulnerable species, it was found that the red snapper, goliath grouper, and nassau grouper were all deemed high priority targets for management decisions due to a combination of high vulnerability and high depletion rates"), 
+             br(), 
+      
     ),
     tabPanel("Mapping Vulnerabilities", "content"),
     tabPanel("Comparing Trade-Offs", "content"),
