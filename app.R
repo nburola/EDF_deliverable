@@ -199,14 +199,7 @@ server <- function(input, output){
 #==================================
 #
   
-    bioMass_growth <- ggplot(fishe_clean, aes(x = assess, fill = growth))+
-    geom_histogram(binwidth = 2.5)+
-    labs(x = "Frequency of Assessment (Years)",
-         y = "Frequency of Growth Rate",
-         title = "Assessments Intervels") +
-    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
-          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
-    theme_minimal()
+
   
 }
 
