@@ -17,6 +17,7 @@ library(shinydashboard)
 library(tidyverse)
 library(here)
 library(janitor)
+library(plotly)
 
 #
 # This is a Shiny web application. You can run the application by clicking
@@ -29,6 +30,14 @@ library(janitor)
 
 # read in data
 fishe <- read_csv(here::here("raw_data", "alldata_combined.csv"))
+fishe_clean <- fishe %>% 
+  drop_na() %>% 
+  mutate(status = factor(status, levels = c("closed", "over", "good"), 
+                         labels = c("Closed", "Overfished", "Good"))) %>% 
+  mutate(error = as.factor(error)) %>% 
+  mutate(hcr = as.factor(hcr))
+
+  
 
 ui <- fluidPage(
   theme = shinytheme("darkly"),
@@ -121,14 +130,84 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
              br(), 
              p("Step 5: Priortization: After organizing the priority table for all three highly vulnerable species, it was found that the red snapper, goliath grouper, and nassau grouper were all deemed high priority targets for management decisions due to a combination of high vulnerability and high depletion rates"), 
              br(), 
-      
+             
     ),
     tabPanel("Mapping Vulnerabilities", "content"),
-    tabPanel("Comparing Trade-Offs", "content"),
+    tabPanel("Comparing Trade-Offs", 
+             tags$h3("Comparing Trade-Offs", style = "color:steelblue; font-family:Helvetica"),
+             p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:skyblue; font-family:Helvetica", hr()),
+             radioButtons(inputId = "choice",
+                          label = "Checkbox Group",
+                          choices = c("Growth rates" = "growth",
+                                      "Error reduction" = "error",
+                                      "Proportion closed/overfished" = "status",
+                                      "Harvest Control Rule (HCR)" = "hcr")),
+             mainPanel(plotOutput(outputId = "trade_off"))),
     tabPanel("Biomass Over Time", "content")
   )
 )
 
-server <- function(input, output){}
+server <- function(input, output){
+# code for the trade-offs part
+#==================================
+#
+    tradeOff_growth <- ggplot(fishe_clean, aes(x = assess, fill = growth))+
+    geom_histogram(binwidth = 2.5)+
+    labs(x = "Frequency of Assessment (Years)",
+         y = "Frequency of Growth Rate",
+         title = "Assessments Intervels") +
+    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
+          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
+    theme_minimal()
+  
+  tradeOff_error <- ggplot(fishe_clean, aes(x = assess, fill = error))+
+    geom_histogram(binwidth = 2.5)+
+    labs(x = "Frequency of Assessment (Years)",
+         y = "Frequency of Error Reduction",
+         title = "Assessments Intervels") +
+    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
+          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
+    theme_minimal()
+  
+  tradeOff_status <- ggplot(fishe_clean, aes(x = assess, fill = status))+
+    geom_histogram(binwidth = 2.5)+
+    labs(x = "Frequency of Assessment (Years)",
+         y = "Frequency of Status",
+         title = "Assessments Intervels") +
+    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
+          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
+    theme_minimal()
+  
+  tradeOff_hcr <- ggplot(fishe_clean, aes(x = assess, fill = hcr))+
+    geom_histogram(binwidth = 2.5)+
+    labs(x = "Frequency of Assessment (Years)",
+         y = "Frequency of Harvest Control Rule (HCR)",
+         title = "Assessments Intervels") +
+    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
+          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
+    theme_minimal()
+
+  
+  output$trade_off <- renderPlot({
+    if (req(input$choice) == "growth"){print(tradeOff_growth)}
+    else if (req(input$choice) == "error"){print(tradeOff_error)}
+    else if (req(input$choice) == "status"){print(tradeOff_status)}
+    else{print(tradeOff_hcr)}
+  })
+  
+# code for the biomass part
+#==================================
+#
+  
+    bioMass_growth <- ggplot(fishe_clean, aes(x = assess, fill = growth))+
+    geom_histogram(binwidth = 2.5)+
+    labs(x = "Frequency of Assessment (Years)",
+         y = "Frequency of Growth Rate",
+         title = "Assessments Intervels") +
+    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
+          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
+    theme_minimal()
+  
+}
 
 shinyApp(ui = ui, server = server)
