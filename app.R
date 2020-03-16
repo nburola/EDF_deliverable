@@ -15,6 +15,7 @@ library(shiny)
 library(shinythemes)
 library(shinydashboard)
 library(tidyverse)
+library(dplyr)
 library(here)
 library(janitor)
 library(plotly)
@@ -37,7 +38,19 @@ fishe_clean <- fishe %>%
   mutate(error = as.factor(error)) %>% 
   mutate(hcr = as.factor(hcr))
 
-  
+# reading new biomass data
+fishe_b <- read_csv(here::here("raw_data", "shiny_biomass.csv")) %>% 
+  group_by(year) %>% 
+  mutate(hcr_select = 1 - hcr) %>% 
+  drop_na() 
+
+# create unique dataset list
+
+lst.b_0  <- unique(fishe_b$b_0) # initial biomass list
+lst.r_0  <- unique(fishe_b$r_0) # growth rate list
+lst.hcr_select  <- unique(sort(fishe_b$hcr_select)) # hcr list
+lst.assess  <- unique(sort(fishe_b$assess)) # assessment interval list
+lst.error  <- unique(sort(fishe_b$error)) # error reduction list
 
 ui <- fluidPage(
   theme = shinytheme("darkly"),
@@ -143,8 +156,33 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
                                       "Proportion closed/overfished" = "status",
                                       "Harvest Control Rule (HCR)" = "hcr")),
              mainPanel(plotOutput(outputId = "trade_off"))),
-    tabPanel("Biomass Over Time", "content")
-  )
+    tabPanel("Biomass Over Time",
+             tags$h3("Estimating the biomass", style = "color:steelblue; font-family:Helvetica"),
+             p("Select the parameter values to estimate the biomass", style = "color:skyblue; font-family:Helvetica",hr()
+               ),
+             selectInput("select_b_o", 
+                         h3("Select biomass start"), 
+                         choices = lst.b_0, 
+                         selected = 1),
+             selectInput("select_r_o", 
+                           h3("Select growth rate"), 
+                           choices = lst.r_0, 
+                           selected = 1),
+             selectInput("select_hcr", 
+                         h3("Select harvest control rule"), 
+                         choices = lst.hcr_select, 
+                         selected = 0.5),
+             selectInput("select_assess", 
+                         h3("Select evaluation years"), 
+                         choices = lst.assess, 
+                         selected = 0),
+             selectInput("select_error", 
+                         h3("Select error reduction"), 
+                         choices = lst.error, 
+                         selected = 0),
+             mainPanel(plotOutput(outputId = "biomass_g")
+             ),
+    ))
 )
 
 server <- function(input, output){
@@ -198,9 +236,33 @@ server <- function(input, output){
 # code for the biomass part
 #==================================
 #
-  
 
+  # first reactive dataframe
+  fishe_react<-reactive({
+    #dataframe creation
+    fishe_b %>%
+      filter(r_0 == input$select_r_o,
+             b_0 == input$select_b_o,
+             error == input$select_error,
+             assess == input$select_assess,
+             hcr_select == input$select_hcr
+             ) %>% 
+        summarize(b=mean(b))
+  })
+
+  # second reactive data frame
+ 
   
+  output$biomass_g <- renderPlot({
+    ggplot(data = fishe_react(), aes(x = year, y = b)) +
+      geom_line(color = "steelblue", size = 1) +
+      labs(x = "Time (Years)",
+           y = "Biomass (tons)",
+           title = "Biomass evolution in the next 100 years")+ 
+      theme(legend.title = element_text(color = "blue", size = 10, face = "bold"))+ 
+      theme_minimal()
+  })
+ 
 }
 
 shinyApp(ui = ui, server = server)
