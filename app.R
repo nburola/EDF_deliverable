@@ -40,6 +40,7 @@ fishe_clean <- fishe %>%
 
 # reading new biomass data
 fishe_b <- read_csv(here::here("raw_data", "shiny_biomass.csv")) %>% 
+  rename(biomass= b, catch=c) %>% 
   group_by(year) %>% 
   mutate(hcr_select = 1 - hcr) %>% 
   drop_na() 
@@ -158,32 +159,50 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
              mainPanel(plotOutput(outputId = "trade_off"))),
     tabPanel("Biomass Over Time",
              tags$h3("Estimating the biomass", style = "color:steelblue; font-family:Helvetica"),
-             p("Select the parameter values to estimate the biomass", style = "color:skyblue; font-family:Helvetica",hr()
+             p("Select the parameter values to estimate the biomass for the next 100 years. The outcomes will vary according to growing rate, error reduction, assessment interval, starting biomass and harvest control rule.", style = "color:skyblue; font-family:Helvetica",hr()
                ),
+             tags$style(type='text/css', 
+                        ".selectize-input { font-size: 20px; line-height: 20px;} .selectize-dropdown { font-size: 14px; line-height: 14px; }"),
+               sidebarPanel(
+                 
              selectInput("select_b_o", 
                          h3("Select biomass start"), 
                          choices = lst.b_0, 
                          selected = 1),
+             
              selectInput("select_r_o", 
                            h3("Select growth rate"), 
                            choices = lst.r_0, 
                            selected = 1),
-             selectInput("select_hcr", 
-                         h3("Select harvest control rule"), 
+            
+              selectInput("select_hcr", 
+                         h3("Select harvest control"), 
                          choices = lst.hcr_select, 
                          selected = 0.5),
+             
              selectInput("select_assess", 
-                         h3("Select evaluation years"), 
+                         h3("Select assessed years"), 
                          choices = lst.assess, 
                          selected = 0),
-             selectInput("select_error", 
+            
+              selectInput("select_error", 
                          h3("Select error reduction"), 
                          choices = lst.error, 
-                         selected = 0),
-             mainPanel(plotOutput(outputId = "biomass_g")
-             ),
+                         selected = 0)),
+             mainPanel(
+               tabsetPanel(
+                 tabPanel("Plot",
+                          fluidRow(
+                            plotOutput(outputId = "biomass_g")),
+                          tabPanel("Biomass dataset", downloadButton("downloadData", "Download series"))
+                          
+                 ))
+                       ),
+
     ))
 )
+
+
 
 server <- function(input, output){
 # code for the trade-offs part
@@ -247,22 +266,36 @@ server <- function(input, output){
              assess == input$select_assess,
              hcr_select == input$select_hcr
              ) %>% 
-        summarize(b=mean(b))
+        summarize(biomass=mean(biomass),
+                  catch=mean(catch))
   })
 
   # second reactive data frame
  
-  
   output$biomass_g <- renderPlot({
-    ggplot(data = fishe_react(), aes(x = year, y = b)) +
-      geom_line(color = "steelblue", size = 1) +
+    ggplot() +
+      geom_line(data = fishe_react(), aes(x = year, y = biomass), color = "steelblue", size = 1) +
+      #geom_line(data = fishe_react(), aes(x = year, y = catch), color = "red", size = 1) +
       labs(x = "Time (Years)",
-           y = "Biomass (tons)",
-           title = "Biomass evolution in the next 100 years")+ 
-      theme(legend.title = element_text(color = "blue", size = 10, face = "bold"))+ 
+           y = "Biomass and catch (tons)",
+           title = "Biomass evolution in the next 100 years")+
       theme_minimal()
   })
- 
+  
+  output$table <- renderTable({
+    fishe_react()
+  })
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste("fishe", ".csv", sep = "")
+    },
+    content = function(file) {
+      write.csv(fishe_react(), file, row.names = FALSE)
+    }
+  )
+  
+
 }
 
 shinyApp(ui = ui, server = server)
