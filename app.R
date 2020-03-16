@@ -155,8 +155,8 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
     ),
     tabPanel("Mapping Vulnerabilities", 
              dashboardBody( 
-               tags$h3('Climate Change and Land Temperature (1901-2013)', style="text-align:center;color:#87ceeb;font-size:200%"),
-               p("The average global temperature has increased by 0.9°C (1.5°F) compared to the baseline temperature of 14°C for the period of 1951-1980. Even if it has risen, the magnitude of the temperature increase varies from region to region. Data below comes from the Climatic Research Unit and maps the previous 112 years of global temperature from 1901-2013. Sea surface temperatures are not included in the following dataset considering this is only land temperatures. In addition to showing off land temperatures, the average annual land temperature is also included. (Source: Climatic Research Unit (CRU). “Global Temperatures from 1901 - 2013.” 2014.)", style = "color:skyblue; font-family:Helvetica"),
+               tags$h3('Climate Change and Land Temperature (1901-2013)', style = "color:steelblue; font-family:Helvetica"),
+               p("The average global temperature has increased by 0.9°C (1.5°F) compared to the baseline temperature of 14°C for the period of 1951-1980. Even if it has risen, the magnitude of the temperature increase varies from region to region. Data below comes from the Climatic Research Unit and maps the previous 112 years of global temperature from 1901-2013. Sea surface temperatures are not included in the following dataset considering this is only land temperatures. In addition to showing off land temperatures, the average annual land temperature is also included. (Source: Climatic Research Unit (CRU). “Global Temperatures from 1901 - 2013.” 2014.)", style = "color:white; font-family:Helvetica"),
                br(),
                
                fluidRow(column(width = 7,
@@ -170,7 +170,7 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
              )),
     tabPanel("Comparing Trade-Offs", 
              tags$h3("Comparing Trade-Offs", style = "color:steelblue; font-family:Helvetica"),
-             p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:skyblue; font-family:Helvetica", hr()),
+             p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:white; font-family:Helvetica", hr()),
              radioButtons(inputId = "choice",
                           label = "Checkbox Group",
                           choices = c("Growth rates" = "growth",
@@ -180,7 +180,7 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
              mainPanel(plotOutput(outputId = "trade_off"))),
     tabPanel("Biomass Over Time",
              tags$h3("Estimating the biomass", style = "color:steelblue; font-family:Helvetica"),
-             p("Select the parameter values to estimate the biomass for the next 100 years. The outcomes will vary according to growing rate, error reduction, assessment interval, starting biomass and harvest control rule.", style = "color:skyblue; font-family:Helvetica",hr()
+             p("Select the parameter values to estimate the biomass for the next 100 years. The outcomes will vary according to growing rate, error reduction, assessment interval, starting biomass and harvest control rule.", style = "color:white; font-family:Helvetica",hr()
                ),
              tags$style(type='text/css', 
                         ".selectize-input { font-size: 20px; line-height: 20px;} .selectize-dropdown { font-size: 14px; line-height: 14px; }"),
