@@ -19,7 +19,11 @@ library(dplyr)
 library(here)
 library(janitor)
 library(plotly)
-
+library(ggplot2)
+library(ggmap)
+library(maptools)
+library(maps)
+library(lubridate)
 #
 # This is a Shiny web application. You can run the application by clicking
 # the 'Run App' button above.
@@ -28,6 +32,9 @@ library(plotly)
 #
 #    http://shiny.rstudio.com/
 #
+
+# Reading in the new data about mapping vulnerabilites 
+load("raw_data/cru_1901_2013_tmp_coarser")
 
 # read in data
 fishe <- read_csv(here::here("raw_data", "alldata_combined.csv"))
@@ -146,7 +153,21 @@ hypothetical case study concerning a nearshore tropical reef fishery in the Carr
              br(), 
              
     ),
-    tabPanel("Mapping Vulnerabilities", "content"),
+    tabPanel("Mapping Vulnerabilities", 
+             dashboardBody( 
+               tags$h3('Climate Change and Land Temperature (1901-2013)', style="text-align:center;color:#87ceeb;font-size:200%"),
+               p("The average global temperature has increased by 0.9°C (1.5°F) compared to the baseline temperature of 14°C for the period of 1951-1980. Even if it has risen, the magnitude of the temperature increase varies from region to region. Data below comes from the Climatic Research Unit and maps the previous 112 years of global temperature from 1901-2013. Sea surface temperatures are not included in the following dataset considering this is only land temperatures. In addition to showing off land temperatures, the average annual land temperature is also included. (Source: Climatic Research Unit (CRU). “Global Temperatures from 1901 - 2013.” 2014.)", style = "color:skyblue; font-family:Helvetica"),
+               br(),
+               
+               fluidRow(column(width = 7,
+                               plotOutput("distPlot",dblclick='plot_dblclick', click = "plot_click")
+               ),
+               
+               column(width = 7,
+                      plotOutput('dbclick'))
+               )
+               
+             )),
     tabPanel("Comparing Trade-Offs", 
              tags$h3("Comparing Trade-Offs", style = "color:steelblue; font-family:Helvetica"),
              p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:skyblue; font-family:Helvetica", hr()),
