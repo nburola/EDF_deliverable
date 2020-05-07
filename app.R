@@ -1,6 +1,6 @@
-#Names: Nathaniel Burola, Siya Qui, Mauricio Collado 
+#Names: Nathaniel Burola, Chase Brewster, Gracie White, and Sara Orofino
 #Subject: Somefin' FISHE Shiny App 
-#Date: 4/30/2020
+#Date: 5/6/2020
 
 #Installing the packages to construct a Shiny App (commented out in order to avoid long processing)
 #install.packages("shiny", repos = "https://cran.rstudio.com", dependencies = TRUE)
@@ -79,119 +79,18 @@ ui <- fluidPage(
   tabsetPanel(
     tabPanel("Introduction",
              strong(h3("About the Project (Background)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica")),
-             em(strong(h4("What is the Enviromental Defense Fund (EDF) and what are they doing with data-limited fisheries management?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))), 
+             em(strong(h4("What is this project about?",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))), 
              tags$img(src = "EDF.png", height = "100px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
              br(),
-             p("EDF is a nonprofit environmental advocacy group known for working on issues such as global warming, ecosystem restoration and oceans. Despite the immense value of fisheries, the majority of global fisheries lack the appropriate data to utilizze conventional scientific stock assessment methods.",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
+             p("This is an interactive web application called a Shiny App designed to communicate the main takeaways of the Somefin' FISHE Project. Our client, the Environmental Defense Fund (EDF) can use this project in order to help fishery managers make recommendations with their fish stocks in relation to climate change.",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
+             p("To find out more information about the Somefin' FISHE project brief, copy and paste this URL, http://bren.ucsb.edu/research/documents/SomefinFISHEBrief.pdf", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
+             p("To find out more information about the Somefin' FISHE project poster, copy and paste this URL, http://bren.ucsb.edu/research/images/SomefinFISHEPoster.png", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
+             p("To find out more information about the Somefin' FISHE project final report, copy and paste this URL, http://bren.ucsb.edu/research/documents/SomefinFISHEFinalReport.pdf", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
              br(),
-             hr(),
-             
-             em(strong(h4("What is the Framework for Integrated Stock and Habitat Evaluation? (FISHE)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             tags$img(src = "FISHE.png", height = "300px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
-             p("FISHE is an 11 step adaptive management framework designed by EDF to assist with the management of data-limited fisheries. The purpose of the framework is to assist fisheries managers conduct simplified stock assessments and evaluate potential management options with limited inputs.",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(),
-             p("While FISHE was designed to capture the inherently dynamic nature of fisheries, it was not designed to address the expected environmental changes stemming from climate change. As climate change has already affected fish stocks worlwdide, it is imperative that FISHE be robut to climate-induced variations.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(), 
-             hr(),
-             
-             em(strong(h4("Which parts of FISHE are most likely going to be affected by climate change?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             tags$img(src = "vulnerable.PNG", height = "300px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
-             p("Since FISHE has multiple steps, it is important to identify the aspects of the framework that were most vulnerable to climate change:", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(), 
-             p("Step 7: Reference Points: theoretical values that allow you to determine the status of the fishery. If you are close to your fishing target, then you could be underfishing. However, if you are close to your limit,  there could be a case of severe overfishing.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(), 
-             p("Step 8: Harvest Control Rules (HCR): simple rules that direct the action to be taken from a resulting target. It could be simple enough such as fish more, reduce by x amount of percentage, or even stop fishing altogether.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(), 
-             p("Step 9: Detailed Assessments: detailed assessments are needed to estimate actual fishery values. Estimated sampling error is a potential factor which may affect results with Tier 1 sampling error representing 10%, Tier 2 representing 30%, and Tier 3 representing 50%", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(), 
-             p("Step 11: Implementation and Adaptation: implementation involves choosing Harvest Control Measures (HCM) which describe how the HCR of Step 8 will be implemented. Adaptation involves the process of re-visiting fishery goals and re-evaluating the state of the fishery.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             hr(),
-             
-             strong(h3("How was the data created?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica")),
-             em(strong(h4("Was the data collected or was it all simulated by model runs?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             tags$img(src = "parameters.png", height = "300px", width = "500px", style="display: block; margin-left: auto; margin-right: auto"),
-             p("With the baseline model, the following terms were used to represent variables such as growth (r), carrying capacity (k), inital biomass (b0), shape parameter (p), and time. Adding climate into the baseline model was accomplished by using a change in growth (Δr) and a change in carrying capacity (Δk). To simulate management decisions, fishing pressure, harvest rules, assessment intervals, and sampling error was added to the model. All these variables combined allowed 100,000 + simulations to be computed with the model.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             
-             em(strong(h4("What type of model are you running (generic that can be applied to all vs specific that can only be applied to a few?)",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             p("It is important to note that this model is a generic model that can be adapated to a wide range of situations. This is not meant to be applied to specific case studies as every fishery is in a different state prior to being assessed.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             hr(),
-             
-             strong(h3("Variable Glossary (defined variables)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica")),
-             em(strong(h4("What are the variables that are going to be defined and utilized in this Shiny App?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             br(),
-             p("- Growth rates (slow, medium, and fast)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             p("- Harvest Control Rules (HCRs)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             p("- Error reduction", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             p("- Assessment intervals", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
              hr(),
              
     ),
-             
-             tabPanel("FISHE Framework", 
-            strong(h3("About FISHE Framework (What is the FISHE Framework?)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica")),
-             em(strong(h4("What is the Frameworkfor Intergrated Stock and Habitat Evaluation (FISHE)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-             tags$img(src = "FISHE.png", height = "300px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
-            br(),
-             p("EDF designed FISHE to assist with the management of data-limited fisheries. FISHE is an 11 step adaptive management framework designed to help fisheires managers conduct simplified stock assessments and evaluate potential management options with limited inputs. FISHE can be used and adapted for any type of stock in any geographic location. FISHE is being used to guide management reforms around the world, including Baja California, the Philippines, and Belize.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(), 
-             hr(),
-             
-             em(strong(h4("What 11 steps are there in this circular process?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-            br(),
-             p("FISHE is composed of the following steps:", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(),
-             p("Step 1: Goal Setting", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-            br(), 
-             p("Step 2: Ecosystem Assessment", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            br(),
-             p("Step 3: Vulnerability Assessment", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            br(), 
-             p("Step 4: Initial Stock Assessment", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-            br(),
-             p("Step 5: Prioritization", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-            br(),
-             p("Step 6: Performance Indicators", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            br(),
-             p("Step 7: Reference Points",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-            br(),
-             p("Step 8: Harvest Control Rules (HCR)",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            br(),
-             p("Step 9: Detailed Assessments",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-            br(),
-             p("Step 10: Interpretation",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            br(),
-             p("Step 11: Implementation and Adaptation", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             br(), 
-             p("FISHE is an inclusive process which considers all stakeholders that are involved. Steps 1-8 of the framework are completed before any data is analyzed or assessed. Steps 9-11 involves the actual stock assessment after the management framework is set.", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             br(), 
-            hr(),
-             
-             em(strong(h4("How is FISHE utilized throughout the world?", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))),
-            br(),
-             p("As an adaptable management framework, FISHE has been developed to be applicable to fisheries in any type of system. Data collected through the 11 step framework will be equally applicable to these methods. FISHE is utilized in several countries such as Cuba to protect the near endangered lane snapper (Lutjanus synagris), Indonesia to protect the blue swimming crab (Portunus armatus), and other countries including Myanmar, Belize, and Mexico.",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-            hr(),
-             
-    ),
-    tabPanel("Mapping Vulnerabilities", 
-             dashboardBody( 
-               tags$h3('Climate Change and Land Temperature (1901-2013)', style = "color:steelblue; font-family:Helvetica"),
-               p("The average global temperature has increased by 0.9°C (1.5°F) compared to the baseline temperature of 14°C for the period of 1951-1980. Even if it has risen, the magnitude of the temperature increase varies from region to region. Data below comes from the Climatic Research Unit and maps the previous 112 years of global temperature from 1901-2013. Sea surface temperatures are not included in the following dataset considering this is only land temperatures. In addition to showing off land temperatures, the average annual land temperature is also included. (Source: Climatic Research Unit (CRU). “Global Temperatures from 1901 - 2013.” 2014.)", style = "color:white; font-family:Helvetica"),
-               br(),
-               
-               fluidRow(column(width = 7,
-                               plotOutput("distPlot",dblclick='plot_dblclick', click = "plot_click")
-               ),
-               
-               column(width = 7,
-                      plotOutput('dbclick'))
-               )
-               
-             )),
+            
     tabPanel("Comparing Trade-Offs", 
              tags$h3("Comparing Trade-Offs", style = "color:steelblue; font-family:Helvetica"),
              p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:white; font-family:Helvetica", hr()),
