@@ -3,13 +3,12 @@
 #Date: 5/11/2020
 
 #Installing the packages to construct a Shiny App (commented out in order to avoid long processing)
-#install.packages("shiny", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("shinydashboard", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("tidyverse", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("here", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("janitor", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("shinythemes", repos = "https://cran.rstudio.com", dependencies = TRUE)
-#install.packages("purrr", repos = "https://cran.rstudio.com", dependencies = TRUE)
+#install.packages("shiny")
+#install.packages("shinydashboard")
+#install.packages("here")
+#install.packages("janitor")
+#install.packages("shinythemes")
+#install.packages("purrr")
 
 ##############Load Packages
 library(shiny)
@@ -266,9 +265,6 @@ ai_all_g <- rbind(ai_none_g, ai_perf_g, ai_proxy_g)
 
 source("sim_closure.R")
 source("sim_fishery.R")
-source("int.R")
-
-assess_int <- seq(10,100,10)
 
 ##############Begin App
 
