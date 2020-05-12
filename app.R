@@ -1,6 +1,6 @@
 #Names: Nathaniel Burola, Chase Brewster, Gracie White, and Sara Orofino
 #Subject: Somefin' FISHE Shiny App 
-#Date: 5/6/2020
+#Date: 5/11/2020
 
 #Installing the packages to construct a Shiny App (commented out in order to avoid long processing)
 #install.packages("shiny", repos = "https://cran.rstudio.com", dependencies = TRUE)
@@ -9,8 +9,9 @@
 #install.packages("here", repos = "https://cran.rstudio.com", dependencies = TRUE)
 #install.packages("janitor", repos = "https://cran.rstudio.com", dependencies = TRUE)
 #install.packages("shinythemes", repos = "https://cran.rstudio.com", dependencies = TRUE)
+#install.packages("purrr", repos = "https://cran.rstudio.com", dependencies = TRUE)
 
-#Attaching the packages to construct a Shiny App 
+##############Load Packages
 library(shiny)
 library(shinythemes)
 library(shinydashboard)
@@ -24,126 +25,362 @@ library(ggmap)
 library(maptools)
 library(maps)
 library(lubridate)
-#
-# This is a Shiny web application. You can run the application by clicking
-# the 'Run App' button above.
-#
-# Find out more about building applications with Shiny here:
-#
-#    http://shiny.rstudio.com/
-#
+library(purrr)
 
-# Reading in the new data about mapping vulnerabilites 
-load("raw_data/cru_1901_2013_tmp_coarser")
+# This is a Shiny web application. You can run the application by clicking the 'Run App' button above.
 
-# read in data
-fishe <- read_csv(here::here("raw_data", "alldata_combined.csv"))
-fishe_clean <- fishe %>% 
-  drop_na() %>% 
-  mutate(status = factor(status, levels = c("closed", "over", "good"), 
-                         labels = c("Closed", "Overfished", "Good"))) %>% 
-  mutate(error = as.factor(error)) %>% 
-  mutate(hcr = as.factor(hcr))
+# Find out more about building applications with Shiny here: http://shiny.rstudio.com/
 
-# reading new biomass data
-fishe_b <- read_csv(here::here("raw_data", "shiny_biomass.csv")) %>% 
-  rename(biomass= b, catch=c) %>% 
-  group_by(year) %>% 
-  mutate(hcr_select = 1 - hcr) %>% 
-  drop_na() 
+##############Read in Data
 
-# create unique dataset list
+######Old Model
 
-lst.b_0  <- unique(fishe_b$b_0) # initial biomass list
-lst.r_0  <- unique(fishe_b$r_0) # growth rate list
-lst.hcr_select  <- unique(sort(fishe_b$hcr_select)) # hcr list
-lst.assess  <- unique(sort(fishe_b$assess)) # assessment interval list
-lst.error  <- unique(sort(fishe_b$error)) # error reduction list
+#No Climate Response
+fishe_1 <- read_csv(here::here("raw_data", "alldata_combined.csv"))
+
+#Perfect Climate Response
+fishe_2 <- read_csv(here::here("raw_data", "fmsy_u_all.csv"))
+
+#Precautionary Climate Response
+fishe_3 <- read_csv(here::here("raw_data", "proxy_old_all_publics.csv"))
+
+######New Model
+
+#No Climate Response
+fishe_4 <- read_csv(here::here("raw_data", "noclose_all_c.csv"))
+
+#Perfect Climate Response
+fishe_5 <- read_csv(here::here("raw_data", "noclose_all_u.csv"))
+
+#Precautionary Climate Response
+fishe_6 <- read_csv(here::here("raw_data", "proxy_new_all_publics.csv"))
+
+##############Wrangle Data
+
+######HCR
+
+###Prop Tables
+
+#No Climate Response
+hcr_none <- fishe_1 %>% 
+  filter(error != 0.5) %>% 
+  filter(r_s < 0) %>% 
+  group_by(hcr) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+#Perfect Climate Response
+hcr_perf <- fishe_2 %>% 
+  filter(error != 0.5) %>% 
+  filter(r_s < 0) %>% 
+  group_by(hcr) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+#Precautionary Climate Response
+hcr_proxy <- fishe_3 %>% 
+  filter(error != 0.5) %>% 
+  filter(ai != 0) %>% #filter out no repeat (none of the other data has this ai)
+  filter(r_s < 0) %>% 
+  group_by(hcr) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+###Graph-Ready Data
+
+#No Climate Response
+hcr_none_g <- data.frame(hcr = hcr_none$hcr, response = rep("none", 10),
+                          prop_good = hcr_none$prop_good)
+
+#Perfect Climate Response
+hcr_perf_g <- data.frame(hcr = hcr_perf$hcr, response = rep("ideal", 10),
+                          prop_good = hcr_perf$prop_good)
+
+#Precautionary Climate Response
+hcr_proxy_g <- data.frame(hcr = hcr_proxy$hcr, response = rep("precautionary", 10),
+                            prop_good = hcr_proxy$prop_good)
+
+#No Climate Response & Perfect Climate Response
+hcr_none_perf_g <- rbind(hcr_none_g, hcr_perf_g)
+
+#No Climate Response & Precautionary Climate Response
+hcr_none_proxy_g <- rbind(hcr_none_g, hcr_proxy_g)
+
+#Perfect Climate Response & Precautionary Climate Response
+hcr_perf_proxy_g <- rbind(hcr_perf_g, hcr_proxy_g)
+
+#All Climate Responses
+hcr_all_g <- rbind(hcr_none_g, hcr_perf_g, hcr_proxy_g)
+
+######Error
+
+###Prop Tables
+
+#No Climate Response
+err_none <- fishe_1 %>% 
+  filter(r_s < 0) %>% 
+  group_by(error) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+err_none$error <- as.factor(err_none$error)
+
+#Perfect Climate Response
+err_perf <- fishe_2 %>%
+  filter(r_s < 0) %>% 
+  group_by(error) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+err_perf$error <- as.factor(err_perf$error)
+
+#Precautionary Climate Response
+err_proxy <- fishe_3 %>% 
+  filter(ai != 0) %>% #filter out no repeat (none of the other data has this ai)
+  filter(r_s < 0) %>% 
+  group_by(error) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate(simulations = sum(closed + over + good)) %>% 
+  mutate(prop_good = good / simulations)
+
+err_proxy$error <- as.factor(err_proxy$error)
+
+###Graph-Ready Data
+
+#No Climate Response
+err_none_g <- data.frame(error = err_none$error, response = rep("none", 3),
+                          prop_good = err_none$prop_good)
+
+#Perfect Climate Response
+err_perf_g <- data.frame(error = err_perf$error, response = rep("ideal", 3),
+                          prop_good = err_perf$prop_good)
+
+#Precautionary Climate Response
+err_proxy_g <- data.frame(error = err_proxy$error, response = rep("precautionary", 3),
+                            prop_good = err_proxy$prop_good)
+
+#No Climate Response & Perfect Climate Response
+err_none_perf_g <- rbind(err_none_g, err_perf_g)
+
+#No Climate Response & Precautionary Climate Response
+err_none_proxy_g <- rbind(err_none_g, err_proxy_g)
+
+#Perfect Climate Response & Precautionary Climate Response
+err_perf_proxy_g <- rbind(err_perf_g, err_proxy_g)
+
+#All Climate Responses
+err_all_g <- rbind(err_none_g, err_perf_g, err_proxy_g)
+
+######Assessment Interval
+
+###Prop Tables
+
+#No Climate Response
+ai_intervals <- c(20,15,10,5,1) #new intervals in correct order
+
+fishe_4[is.na(fishe_4)] <- "misc" #turn status NA into misc
+
+ai_none <- fishe_4 %>% 
+  mutate(assess_ints = factor(assess, levels = ai_intervals)) %>%
+  filter(r_s < 0) %>% 
+  group_by(assess_ints) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(over + good + misc)) %>% 
+  mutate(prop_good = good / simulations)
+
+#Perfect Climate Response
+ai_intervals <- c(20,15,10,5,1) #new intervals in correct order
+
+fishe_5[is.na(fishe_5)] <- "misc" #turn status NA into misc
+
+ai_perf <- fishe_5 %>% 
+  mutate(assess_ints = factor(assess, levels = ai_intervals)) %>%
+  filter(r_s < 0) %>% 
+  group_by(assess_ints) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(over + good + misc)) %>% 
+  mutate(prop_good = good / simulations)
+
+#Precautionary Climate Response
+ai_intervals <- c(20,15,10,5,1) #new intervals in correct order
+
+fishe_6[is.na(fishe_6)] <- "misc" #turn status NA into misc
+
+# Calculate proportions for graphing:
+ai_proxy <- fishe_6 %>% 
+  mutate(assess_ints = factor(ai, levels = ai_intervals)) %>%
+  filter(ai != 0) %>% 
+  filter(r_s < 0) %>% 
+  group_by(assess_ints) %>%
+  count(status) %>% 
+  spread(key = "status", value = "n") %>% 
+  mutate_if(is.numeric, ~replace(., is.na(.), 0)) %>% 
+  mutate(simulations = sum(over + good + misc)) %>% 
+  mutate(prop_good = good / simulations)
+
+###Graph-Ready Data
+
+#No Climate Response
+ai_none_g <- data.frame(assessment_interval = ai_none$assess_ints, response = rep("none", 5),
+                         prop_good = ai_none$prop_good)
+
+#Perfect Climate Response
+ai_perf_g <- data.frame(assessment_interval = ai_perf$assess_ints, response = rep("ideal", 5),
+                         prop_good = ai_perf$prop_good)
+
+#Precautionary Climate Response
+ai_proxy_g <- data.frame(assessment_interval = ai_proxy$assess_ints, response = rep("precautionary", 5),
+                           prop_good = ai_proxy$prop_good)
+
+#No Climate Response & Perfect Climate Response
+ai_none_perf_g <- rbind(ai_none_g, ai_perf_g)
+
+#No Climate Response & Precautionary Climate Response
+ai_none_proxy_g <- rbind(ai_none_g, ai_proxy_g)
+
+#Perfect Climate Response & Precautionary Climate Response
+ai_perf_proxy_g <- rbind(ai_perf_g, ai_proxy_g)
+
+#All Climate Responses
+ai_all_g <- rbind(ai_none_g, ai_perf_g, ai_proxy_g)
+
+##############Source Functions
+
+source("sim_closure.R")
+source("sim_fishery.R")
+source("int.R")
+
+assess_int <- seq(10,100,10)
+
+##############Begin App
 
 ui <- fluidPage(
   theme = shinytheme("cerulean"),
-  titlePanel(h1("Evaluating Adaptive Management Strategies for Climate Resilient Fisheries")),
-  tags$head(tags$style(
-    HTML('#title {
-    color: black; 
-    font-size: 40px; 
-    font-style: bold; 
-    } '))),
-  tags$style(HTML("
-    .tabbable > .nav > li > a                  {background-color: aqua;  color:black}
-    .tabbable > .nav > li > a[data-value='t1'] {background-color: aqua;   color:black}
-    .tabbable > .nav > li > a[data-value='t2'] {background-color: aqua;  color:black}
-    .tabbable > .nav > li > a[data-value='t3'] {background-color: aqua; color:black}
-    .tabbable > .nav > li[class=active]    > a {background-color: aqua; color:black}
-  ")),
+  titlePanel(h1("Evaluating Adaptive Management Strategies for Climate-Resilient Fisheries")),
+  
   tabsetPanel(
+    
+    
     tabPanel("Introduction",
-             strong(h3("About the Project (Background)", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica")),
-             em(strong(h4("What is this project about?",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"))), 
-             tags$img(src = "EDF.png", height = "100px", width = "300px", style="display: block; margin-left: auto; margin-right: auto"),
              br(),
-             p("This is an interactive web application called a Shiny App designed to communicate the main takeaways of the Somefin' FISHE Project. Our client, the Environmental Defense Fund (EDF) can use this project in order to help fishery managers make recommendations with their fish stocks in relation to climate change.",style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
-             p("To find out more information about the Somefin' FISHE project brief, copy and paste this URL, http://bren.ucsb.edu/research/documents/SomefinFISHEBrief.pdf", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             p("To find out more information about the Somefin' FISHE project poster, copy and paste this URL, http://bren.ucsb.edu/research/images/SomefinFISHEPoster.png", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"), 
-             p("To find out more information about the Somefin' FISHE project final report, copy and paste this URL, http://bren.ucsb.edu/research/documents/SomefinFISHEFinalReport.pdf", style="text-align:justify;color:white;background-color:navy;padding:15px;border-radius:10px;font-family:Helvetica"),
+             p("Evaluating Adaptive Management Strategies for Climate-Resilient Fisheries is a Master's Thesis project with the Bren School of Environmental Science & Management on behalf of the Environmental Defense Fund (EDF)."),
              br(),
-             hr(),
+             p("The purpose of this tool is to provide an interface for further exploration and visualization of the results produced by the research team."),
+             br(),
+             p("For more information:"),
+             tags$a(href="http://bren.ucsb.edu/research/documents/SomefinFISHEFinalReport.pdf", "Project Report"),
+             br(),
+             tags$a(href="http://github.com/saraorofino/FISHE", "Project Repository"),
+             br(),
+             tags$a(href="http://somefinfishe.com", "Project Website"),
+             br(),
+             tags$a(href="http://bren.ucsb.edu/research/documents/SomefinFISHEBrief.pdf", "Project Brief"),
+             br(),
+             tags$a(href="http://bren.ucsb.edu/research/images/SomefinFISHEPoster.png", "Project Poster"),
+             br(),
+             hr()
              
     ),
-            
-    tabPanel("Comparing Trade-Offs", 
-             tags$h3("Comparing Trade-Offs", style = "color:steelblue; font-family:Helvetica"),
-             p("Comparing the proportion of bad outcomes in the form of stacked bar graphs showing how outcomes vary over time by different factors (i.e. Growing Rates, Error Reduction, Harvest Control Rule, etc)", style = "color:white; font-family:Helvetica", hr()),
-             radioButtons(inputId = "choice",
-                          label = "Checkbox Group",
-                          choices = c("Growth rates" = "growth",
-                                      "Error reduction" = "error",
-                                      "Proportion closed/overfished" = "status",
-                                      "Harvest Control Rule (HCR)" = "hcr")),
-             mainPanel(plotOutput(outputId = "trade_off"))),
-    tabPanel("Biomass Over Time",
-             tags$h3("Estimating the biomass", style = "color:steelblue; font-family:Helvetica"),
-             p("Select the parameter values to estimate the biomass for the next 100 years. The outcomes will vary according to growing rate, error reduction, assessment interval, starting biomass and harvest control rule.", style = "color:white; font-family:Helvetica",hr()
-               ),
-             tags$style(type='text/css', 
-                        ".selectize-input { font-size: 20px; line-height: 20px;} .selectize-dropdown { font-size: 14px; line-height: 14px; }"),
+    
+    
+    tabPanel("Results", 
+             sidebarLayout(
+              sidebarPanel(
+                radioButtons(inputId = "metric",
+                             label = h4("Management Action"),
+                             choices = c("Harvest Control Rule" = "hcr", 
+                                         "Sampling Error" = "err",
+                                         "Assessment Interval" = "ai")),
+                
+                checkboxGroupInput(inputId = "climate",
+                          label = h4("Climate Response"),
+                          choices = c("No Response" = "none",
+                                      "Perfect Response" = "perf",
+                                      "Precautionary Response" = "proxy"))),
+              
+             mainPanel(plotOutput(outputId = "results"))
+      )
+    ),
+    
+    
+    tabPanel("Model",
+             sidebarLayout(
                sidebarPanel(
+                 selectInput("ai",
+                             label = h5("Assessment Interval"),
+                             choices = c("20", "15", "10", "5", "1")),
+                 sliderInput("bio",
+                             label = h5("Initial Biomass"),
+                             min = 1000,
+                             max = 9000,
+                             value = 3000,
+                             step = 500),
                  
-             selectInput("select_b_o", 
-                         h3("Select biomass start"), 
-                         choices = lst.b_0, 
-                         selected = 1),
-             
-             selectInput("select_r_o", 
-                           h3("Select growth rate"), 
-                           choices = lst.r_0, 
-                           selected = 1),
-            
-              selectInput("select_hcr", 
-                         h3("Select harvest control"), 
-                         choices = lst.hcr_select, 
-                         selected = 0.5),
-             
-             selectInput("select_assess", 
-                         h3("Select assessed years"), 
-                         choices = lst.assess, 
-                         selected = 0),
-            
-              selectInput("select_error", 
-                         h3("Select error reduction"), 
-                         choices = lst.error, 
-                         selected = 0)),
-             mainPanel(
-               tabsetPanel(
-                 tabPanel("Plot",
-                          fluidRow(
-                            plotOutput(outputId = "biomass_g")),
-                          tabPanel("Biomass dataset", downloadButton("downloadData", "Download series"))
-                          
-                 ))
-                       ),
-
-    ))
+                 sliderInput("growth",
+                             label = h5("Growth Rate"),
+                             min = 0.1,
+                             max = 1.0,
+                             value = 0.4,
+                             step = 0.05),
+                 
+                 sliderInput("clim",
+                             label = h5("Climate Change Severity"),
+                             min = -0.02,
+                             max = 0,
+                             value = 0.0,
+                             step = 0.001),
+                 
+                 sliderInput("clim_assump",
+                             label = h5("Precautionary Climate Assumption"),
+                             min = -0.02,
+                             max = 0,
+                             value = 0.0,
+                             step = 0.001),
+                 
+                 sliderInput("error",
+                             label = h5("Sampling Error"),
+                             min = 0,
+                             max = 0.5,
+                             value = 0.1,
+                             step = 0.05),
+                 
+                 sliderInput("hcr",
+                             label = h5("Harvest Control Rules"),
+                             min = 0.5,
+                             max = 0.95,
+                             value = 0.80,
+                             step = 0.05),
+                 
+                 radioButtons("model_type",
+                              label = h5("Model Type"),
+                              choices = c("Closures" = "close",
+                                          "No Closures" = "noclose"),
+                              selected = c("close")),
+                 actionButton("run",
+                              label = h5("Run"))),
+               
+            mainPanel(plotOutput("model"))
+      )
+    )
+  )
 )
 
 
@@ -151,173 +388,407 @@ ui <- fluidPage(
 server <- function(input, output){
 # code for the trade-offs part
 #==================================
-#
-    tradeOff_growth <- ggplot(fishe_clean, aes(x = assess, fill = growth))+
-    geom_histogram(binwidth = 2.5)+
-    labs(x = "Frequency of Assessment (Years)",
-         y = "Frequency of Growth Rate",
-         title = "Assessments Intervels") +
-    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
-          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
-    theme_minimal()
-  
-  tradeOff_error <- ggplot(fishe_clean, aes(x = assess, fill = error))+
-    geom_histogram(binwidth = 2.5)+
-    labs(x = "Frequency of Assessment (Years)",
-         y = "Frequency of Error Reduction",
-         title = "Assessments Intervels") +
-    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
-          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
-    theme_minimal()
-  
-  tradeOff_status <- ggplot(fishe_clean, aes(x = assess, fill = status))+
-    geom_histogram(binwidth = 2.5)+
-    labs(x = "Frequency of Assessment (Years)",
-         y = "Frequency of Status",
-         title = "Assessments Intervels") +
-    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
-          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
-    theme_minimal()
-  
-  tradeOff_hcr <- ggplot(fishe_clean, aes(x = assess, fill = hcr))+
-    geom_histogram(binwidth = 2.5)+
-    labs(x = "Frequency of Assessment (Years)",
-         y = "Frequency of Harvest Control Rule (HCR)",
-         title = "Assessments Intervels") +
-    theme(legend.title = element_text(color = "blue", size = 10, face = "bold"),
-          legend.background = element_rect(fill = "lightblue", size = 0.5, linetype = "solid")) + 
-    theme_minimal()
 
-  
-  output$trade_off <- renderPlot({
-    if (req(input$choice) == "growth"){print(tradeOff_growth)}
-    else if (req(input$choice) == "error"){print(tradeOff_error)}
-    else if (req(input$choice) == "status"){print(tradeOff_status)}
-    else{print(tradeOff_hcr)}
-  })
-  
-  output$distPlot <- renderPlot({
-    mapWorld <- borders("world", colour="gray50", fill="#cce6ff") # create a layer of borders
-    p=ggplot() +   mapWorld
-    p=p+ggtitle("Double click on any country in any \n continent to observe land temperatures since 1901 until 2013")+
-      theme(axis.text.y   = element_blank(),
-            line = element_blank(),
-            axis.text.x   = element_blank(),
-            axis.title.y  = element_blank(),
-            axis.title.x  = element_blank(),
-            panel.grid.major = element_blank(), 
-            panel.grid.minor = element_blank(),
-            plot.title = element_text(hjust=0.5,size = 18,colour="#663300"),
-            panel.border = element_rect(colour = "gray70", fill=NA, size=1))
-    
-    
-    p
-    
-  })
-  
-  
-  double_clicked <- reactiveValues(
-    
-    center = NULL 
-  )
-  
-  observeEvent(input$plot_dblclick, {
-    
-    double_clicked$center <- c(input$plot_dblclick$x,input$plot_dblclick$y)
-    
-  })
-  
-  
-  lon_index<-reactive({
-    z=double_clicked$center
-    which((abs(lon-z[1]))<=1)[1]
-    
-  })
-  
-  
-  lat_index<-reactive({
-    z=double_clicked$center
-    which((abs(lat-z[2]))<=1)[1]
-    
-  })
-  
-  output$dbclick<-renderPlot({
-    
-    if(!is.na(lon_index())){
-      
-      z =tmp[lon_index(),lat_index(),]
-      
-      monthly=matrix(z,nrow=12)
-      
-      if(length(na.omit(monthly))>0){
-        
-        annual_min=apply(monthly,2,min,na.omit=TRUE)
-        annual_max=apply(monthly,2,max,na.omit=TRUE)
-        annual_ave=apply(monthly,2,mean,na.omit=TRUE)
-        
-        
-        annual=as.data.frame(list(annual_ave=annual_ave,years=unique(year(time))))
-        
-        q=ggplot(annual,aes(x=years,y=annual_ave))+geom_line()+ ylab(expression("Temperature "*~degree*C))+theme_bw()
-        q=q+ggtitle(paste0("Annual Average Temperature Trend at (",lon[lon_index()],", ", lat[lat_index()],")"))+xlab('')+theme(axis.title.y = element_text(size=14,angle=90,hjust=.5,vjust=1),
-                                                                                                                                axis.text.y = element_text(colour="darkred",size=16,angle=0,hjust=1,vjust=0),plot.title = element_text(vjust=1.5,size = 15,colour="blue"),
-                                                                                                                                axis.text.x = element_text(colour="darkred",size=16,angle=0,hjust=1,vjust=0))+stat_smooth(method='lm',color='darkred')
-        
-        
-        q
-        
-      }
-      
-    }
-    
-  })
 
+##############Results Tab
   
-  # Handle dounle clicks on the plot
-  
-# code for the biomass part
-#==================================
-#
+######Graphs
 
-  # first reactive dataframe
-  fishe_react<-reactive({
-    #dataframe creation
-    fishe_b %>%
-      filter(r_0 == input$select_r_o,
-             b_0 == input$select_b_o,
-             error == input$select_error,
-             assess == input$select_assess,
-             hcr_select == input$select_hcr
-             ) %>% 
-        summarize(biomass=mean(biomass),
-                  catch=mean(catch))
-  })
+###HCR
 
-  # second reactive data frame
- 
-  output$biomass_g <- renderPlot({
-    ggplot() +
-      geom_line(data = fishe_react(), aes(x = year, y = biomass), color = "steelblue", size = 1) +
-      #geom_line(data = fishe_react(), aes(x = year, y = catch), color = "red", size = 1) +
-      labs(x = "Time (Years)",
-           y = "Biomass and catch (tons)",
-           title = "Biomass evolution in the next 100 years")+
-      theme_minimal()
+#No Climate Response
+hcr_none <- ggplot(hcr_none_g, aes(x = hcr, y = prop_good)) +
+    geom_col(alpha = 0.8, fill = "#BC6435") + 
+    theme_light()+
+    coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+    scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+    labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+    theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+          legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+          legend.box.background = element_blank(),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response
+hcr_perf <- ggplot(hcr_perf_g, aes(x = hcr, y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#079EDF") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Precautionary Climate Response
+hcr_proxy <- ggplot(hcr_proxy_g, aes(x = hcr, y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#B8CE55") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Perfect Climate Response
+hcr_none_perf <- ggplot(hcr_none_perf_g, aes(x = hcr, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF"), name = "Climate Response", labels = c("None", "Perfect")) +
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Precautionary Climate Response
+hcr_none_proxy <- ggplot(hcr_none_proxy_g, aes(x = hcr, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#B8CE55"), name = "Climate Response", labels = c("None", "Precautionary")) +
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response & Precautionary Climate Response
+hcr_perf_proxy <- ggplot(hcr_perf_proxy_g, aes(x = hcr, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#079EDF", "#B8CE55"), name = "Climate Response", labels = c("Perfect", "Precautionary")) +
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#All Climate Responses
+hcr_all <- ggplot(hcr_all_g, aes(x = hcr, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF", "#B8CE55"), name = "Climate Response", labels = c("None", "Perfect", "Precautionary")) +
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
+  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+###Error
+
+#No Climate Response
+err_none <- ggplot(err_none_g, aes(x = fct_rev(error), y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#BC6435") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate","0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response
+err_perf <- ggplot(err_perf_g, aes(x = fct_rev(error), y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#079EDF") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate","0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Precautionary Climate Response
+err_proxy <- ggplot(err_proxy_g, aes(x = fct_rev(error), y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#B8CE55") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate","0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Perfect Climate Response
+err_none_perf <- ggplot(err_none_perf_g, aes(x = fct_rev(error), y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF"), name = "Climate Response", labels = c("None", "Perfect"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate",
+                            "0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Precautionary Climate Response
+err_none_proxy <- ggplot(err_none_proxy_g, aes(x = fct_rev(error), y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#B8CE55"), name = "Climate Response", labels = c("None", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate",
+                            "0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response & Precautionary Climate Response
+err_perf_proxy <- ggplot(err_perf_proxy_g, aes(x = fct_rev(error), y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#079EDF", "#B8CE55"), name = "Climate Response", labels = c("Perfect", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate",
+                            "0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#All Climate Responses
+err_all <- ggplot(err_all_g, aes(x = fct_rev(error), y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF", "#B8CE55"), name = "Climate Response", labels = c("None", "Perfect", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Sampling Error", x = "Accuracy of Estimates", y = "Proportion Healthy") +
+  scale_x_discrete(labels=c("0.5" = "Low", "0.3" = "Moderate",
+                            "0.1" = "High")) +
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+###Assessment Interval
+
+#No Climate Response
+ai_none <- ggplot(ai_none_g, aes(x = assessment_interval, y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#BC6435") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response
+ai_perf <- ggplot(ai_perf_g, aes(x = assessment_interval, y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#079EDF") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Precautionary Climate Response
+ai_proxy <- ggplot(ai_proxy_g, aes(x = assessment_interval, y = prop_good)) +
+  geom_col(alpha = 0.8, fill = "#B8CE55") + 
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Perfect Climate Response
+ai_none_perf <- ggplot(ai_none_perf_g, aes(x = assessment_interval, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF"), name = "Climate Response", labels = c("None", "Perfect"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#No Climate Response & Precautionary Climate Response
+ai_none_proxy <- ggplot(ai_none_proxy_g, aes(x = assessment_interval, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#B8CE55"), name = "Climate Response", labels = c("None", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#Perfect Climate Response & Precautionary Climate Response
+ai_perf_proxy <- ggplot(ai_perf_proxy_g, aes(x = assessment_interval, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#079EDF", "#B8CE55"), name = "Climate Response", labels = c("Perfect", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank())
+
+#All Climate Responses
+ai_all <- ggplot(ai_all_g, aes(x = assessment_interval, y = prop_good, fill = response)) +
+  geom_col(position = "dodge", alpha = 0.8) + 
+  scale_fill_manual(values = c("#BC6435", "#079EDF", "#B8CE55"), name = "Climate Response", labels = c("None", "Perfect", "Precautionary"))+
+  theme_light()+
+  coord_cartesian( ylim=c(0,1), expand = FALSE ) +
+  labs(title = "Assessment Intervals", x = "Frequency of Assessment (Years)", y = "Proportion Healthy")+
+  theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
+        legend.box.background = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()) 
+
+######Outputs
+
+  output$results <- renderPlot({
+    
+    if(req(input$metric) == "hcr" & req(input$climate) == "none"){print(hcr_none)}
+    if(req(input$metric) == "hcr" & req(input$climate) == "perf"){print(hcr_perf)}
+    if(req(input$metric) == "hcr" & req(input$climate) == "proxy"){print(hcr_proxy)}
+    if(req(input$metric) == "hcr" & (all(c("none", "perf") %in% input$climate))){print(hcr_none_perf)}
+    if(req(input$metric) == "hcr" & (all(c("none", "proxy") %in% input$climate))){print(hcr_none_proxy)}
+    if(req(input$metric) == "hcr" & (all(c("perf", "proxy") %in% input$climate))){print(hcr_perf_proxy)}
+    if(req(input$metric) == "hcr" & (all(c("none", "perf", "proxy") %in% input$climate))){print(hcr_all)}
+    
+    if(req(input$metric) == "err" & req(input$climate) == "none"){print(err_none)}
+    if(req(input$metric) == "err" & req(input$climate) == "perf"){print(err_perf)}
+    if(req(input$metric) == "err" & req(input$climate) == "proxy"){print(err_proxy)}
+    if(req(input$metric) == "err" & (all(c("none", "perf") %in% input$climate))){print(err_none_perf)}
+    if(req(input$metric) == "err" & (all(c("none", "proxy") %in% input$climate))){print(err_none_proxy)}
+    if(req(input$metric) == "err" & (all(c("perf", "proxy") %in% input$climate))){print(err_perf_proxy)}
+    if(req(input$metric) == "err" & (all(c("none", "perf", "proxy") %in% input$climate))){print(err_all)}
+    
+    if(req(input$metric) == "ai" & req(input$climate) == "none"){print(ai_none)}
+    if(req(input$metric) == "ai" & req(input$climate) == "perf"){print(ai_perf)}
+    if(req(input$metric) == "ai" & req(input$climate) == "proxy"){print(ai_proxy)}
+    if(req(input$metric) == "ai" & (all(c("none", "perf") %in% input$climate))){print(ai_none_perf)}
+    if(req(input$metric) == "ai" & (all(c("none", "proxy") %in% input$climate))){print(ai_none_proxy)}
+    if(req(input$metric) == "ai" & (all(c("perf", "proxy") %in% input$climate))){print(ai_perf_proxy)}
+    if(req(input$metric) == "ai" & (all(c("none", "perf", "proxy") %in% input$climate))){print(ai_all)}
+    
+
   })
   
-  output$table <- renderTable({
-    fishe_react()
+##############Model Tab
+  
+######Functions
+  
+output$model <- eventReactive(input$run, {
+
+inputs <- reactiveValues()
+  
+inputs$ai <- input$ai
+
+inputs$bio <- input$bio
+
+inputs$growth <- input$growth
+
+inputs$clim <- input$clim
+  
+inputs$clim_assump <- input$clim_assump
+
+inputs$error <- input$error
+
+inputs$hcr <- input$hcr
+
+inputs$ai <- as.numeric(inputs$ai)
+
+inputs$bio <- as.numeric(inputs$bio)
+
+inputs$growth <- as.numeric(inputs$growth)
+
+inputs$clim <- as.numeric(inputs$clim)
+
+inputs$clim_assump <- as.numeric(inputs$clim_assump)
+
+inputs$error <- as.numeric(inputs$error)
+
+inputs$hcr <- as.numeric(inputs$hcr)
+
+assess_int <- list(int(x = inputs$ai))
+  
+#Closure Model
+sim_close <- sim_closure(b = inputs$bio, r = inputs$growth, r_s = inputs$clim, r_p_s = inputs$clim_assump, error = inputs$error, hcr = inputs$hcr)
+
+#No Closure Model
+sim_noclose <- sim_fishery(b = inputs$bio, r = inputs$growth, r_s = inputs$clim, r_p_s = inputs$clim_assump, error = inputs$error, hcr = inputs$hcr)
+
+######Graphs
+
+#Closure Graph
+close_graph <- ggplot(sim_close, aes(x = year, y = b)) +
+    geom_line(aes(color = "#079EDF"), size = 1) +
+    scale_color_manual(values = c("#079EDF"), name = "Model Type", labels = c("Closures"))+
+    theme_light() +
+    coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+    labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+    theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+          legend.text=element_text(size=12), legend.background = element_blank(),
+          legend.box.background = element_blank())
+
+#No Closure Graph
+noclose_graph <- ggplot(sim_noclose, aes(x = year, y = b)) +
+    geom_line(aes(color = "#B8CE55"), size = 1) +
+    scale_color_manual(values = c("#B8CE55"), name = "Model Type", labels = c("No Closures"))+
+    theme_light() +
+    coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+    labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+    theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+          legend.text=element_text(size=12), legend.background = element_blank(),
+          legend.box.background = element_blank())
+
+######Outputs
+
+
+  renderPlot({
+  if(req(input$model_type) == "close"){print(close_graph())}
+  if(req(input$model_type) == "noclose"){print(noclose_graph())}
   })
-  
-  output$downloadData <- downloadHandler(
-    filename = function() {
-      paste("fishe", ".csv", sep = "")
-    },
-    content = function(file) {
-      write.csv(fishe_react(), file, row.names = FALSE)
-    }
-  )
-  
+})
 
 }
 

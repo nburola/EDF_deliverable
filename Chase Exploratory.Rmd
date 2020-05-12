@@ -1,0 +1,130 @@
+---
+title: "Untitled"
+author: "Chase Brewster"
+date: "5/11/2020"
+output: html_document
+---
+
+
+```{r}
+
+source("sim_closure.R")
+source("sim_fishery.R")
+
+assess_int <- seq(5, 100, 5)
+
+#Closure Model  
+sim_close <- sim_closure(b = 2000, r = .4, r_s = -0.002, r_p_s = 0, error = 0.15, hcr = 0.8)
+
+#No Closure Model
+sim_noclose <- sim_fishery(b = 2000, r = .2, r_s = -0.006, r_p_s = 0, error = 0.2, hcr = 0.7)
+
+sim_close_1 <- sim_close %>% 
+  mutate(id = rep("1", 100))
+
+sim_noclose_1 <- sim_noclose %>% 
+  mutate(id = rep("2", 100))
+
+sim_both <- rbind(sim_close_1, sim_noclose_1)
+
+######Graphs
+
+#Closure Graph
+close_graph <- ggplot(sim_close, aes(x = year, y = b)) +
+  geom_line(aes(color = "#079EDF"), size = 1.25) +
+  scale_color_manual(values = c("#079EDF"), name = "Model Type", labels = c("Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,6000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12), legend.background = element_blank(),
+        legend.box.background = element_blank())
+
+#No Closure Graph
+noclose_graph <- ggplot(sim_noclose, aes(x = year, y = b)) +
+  geom_line(aes(color = "#B8CE55"), size = 1.25) +
+  scale_color_manual(values = c("#B8CE55"), name = "Model Type", labels = c("No Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,6000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12), legend.background = element_blank(),
+        legend.box.background = element_blank())
+
+
+both_graph <- ggplot(sim_both, aes(x = year, y = b, group = id)) +
+  geom_line(aes(color = id), size = 1.25) +
+  scale_color_manual(values = c("#079EDF", "#B8CE55"), name = "Model Type", labels = c("Closures", "No Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,6000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+    legend.text=element_text(size=12), legend.background = element_blank(),
+    legend.box.background = element_blank())
+
+noclose_graph
+close_graph
+both_graph
+
+
+
+#Both Graph
+both_graph <- eventReactive(input$run, {ggplot(sim_both(), aes(x = year, y = b, group = id)) +
+  geom_line(aes(color = id), size = 1) +
+  scale_color_manual(values = c("#079EDF", "#B8CE55"), name = "Model Type", labels = c("Closures", "No Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12), legend.background = element_blank(),
+        legend.box.background = element_blank())})
+```
+
+```{r}
+#Assessment Interval
+assess_int <- eventReactive(input$run, {seq(list2env(assess()), 100, list2env(assess()))})
+
+#Closure Model
+sim_close <- eventReactive(input$run, {
+  source("sim_closure.R", local = list2env(parameters()))
+  })
+
+#No Closure Model
+sim_noclose <- eventReactive(input$run, {
+  source("sim_fishery.R", local = list2env(parameters()))
+})
+
+
+######Graphs
+
+#Closure Graph
+close_graph <- eventReactive(input$run, {ggplot(sim_close(), aes(x = year, y = b)) +
+  geom_line(aes(color = "#079EDF"), size = 1) +
+  scale_color_manual(values = c("#079EDF"), name = "Model Type", labels = c("Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12), legend.background = element_blank(),
+        legend.box.background = element_blank())})
+
+#No Closure Graph
+noclose_graph <- eventReactive(input$run, {ggplot(sim_noclose(), aes(x = year, y = b)) +
+  geom_line(aes(color = "#B8CE55"), size = 1) +
+  scale_color_manual(values = c("#B8CE55"), name = "Model Type", labels = c("No Closures"))+
+  theme_light() +
+  coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+  labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+  theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+        legend.text=element_text(size=12), legend.background = element_blank(),
+        legend.box.background = element_blank())})
+
+######Outputs
+
+output$model <- renderPlot({
+    if(req(input$model_type) == "close"){print(close_graph())}
+    if(req(input$model_type) == "noclose"){print(noclose_graph())}
+    
+  })
+```
+
