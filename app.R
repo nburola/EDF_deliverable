@@ -273,7 +273,7 @@ assess_int <- seq(10,100,10)
 ##############Begin App
 
 ui <- fluidPage(
-  theme = shinytheme("cerulean"),
+  theme = shinytheme("flatly"),
   titlePanel(h1("Evaluating Adaptive Management Strategies for Climate-Resilient Fisheries")),
   
   tabsetPanel(
@@ -281,11 +281,34 @@ ui <- fluidPage(
     
     tabPanel("Introduction",
              br(),
-             p("Evaluating Adaptive Management Strategies for Climate-Resilient Fisheries is a Master's Thesis project with the Bren School of Environmental Science & Management on behalf of the Environmental Defense Fund (EDF)."),
+             h2("Welcome!"),
+             img(src='S.Fishie copy.png', align = "right", height = 300, width = 300),
              br(),
-             p("The purpose of this tool is to provide an interface for further exploration and visualization of the results produced by the research team."),
+             p("This tool was developed to provide an interface for further exploration and visualization of the model and results produced by our research team for our Group Thesis Master's Project."),
              br(),
-             p("For more information:"),
+             h3("Results"),
+             p("The 'Results' tab contains the results of more than 200,000 fishery simulations over a 100 year time frame, incorporating FISHE management decisions and climate change effects. To explore the results, select a management action to compare fishery outcomes across that given action. Then, select climate responses to view fishery outcomes under the selected responses."),
+             br(),
+             h3("Model"),
+             p("The 'Model' tab contains the model developed by our team to evaluate fisheries over time using FISHE management in the face of climate change. To run the model, use the provided inputs to select parameter values. Click the 'Set Parameters' button to set the model parameters, and click 'Run Model' to run the model. Then, check the 'graph' box to view the simulation results. To re-run, follow the same steps, and un-check and re-check the 'graph' box."),
+             br(),
+             h3("Model Parameter Descriptions"),
+             strong("Assessment Interval:"), 
+             p("How often the fishery will be re-assessed and a new management decision implemented (ex. 20 = every 20 years)"),
+             strong("Initial Biomass:"), 
+             p("The biomass of the fishery in year 1 (carrying capacity = 10,000)"),
+             strong("Growth Rate:"), 
+             p("The intrinsic growth rate of the fish species"),
+             strong("Climate Change Severity:"), 
+             p("The true impact of climate change on the fish stock (ex. 0 = no climate impacts, -0.02 = severe climate impacts)"),
+             strong("Precautionary Climate Assumption:"), 
+             p("The assumped impact of climate change on the fish stock (ex. 0 = no climate impacts, -0.02 = severe climate impacts)"),
+             strong("Error:"), 
+             p("The level of sampling error in the stock assessment (ex. 0.5 = high error, 0.1 = low error)"),
+             strong("Harvest Control Rule:"), 
+             p("The reduction in fishing pressure should the fishery be performing below its target value (ex. 0.95 = 5% reduction in fishing pressure, 0.6 = 40% reduction in fishing pressure)"),
+             br(),
+             p("For more information about the project:"),
              tags$a(href="http://bren.ucsb.edu/research/documents/SomefinFISHEFinalReport.pdf", "Project Report"),
              br(),
              tags$a(href="http://github.com/saraorofino/FISHE", "Project Repository"),
@@ -296,6 +319,10 @@ ui <- fluidPage(
              br(),
              tags$a(href="http://bren.ucsb.edu/research/images/SomefinFISHEPoster.png", "Project Poster"),
              br(),
+             br(),
+             p("Evaluating Adaptive Management Strategies for Climate-Resilient Fisheries is a Master's Thesis project with the Bren School of Environmental Science & Management on behalf of the Environmental Defense Fund (EDF)."),
+             br(),
+             p("Project Team: Chase Brewster, Nathaniel Burola, Sara Orofino, Gracie White"),
              hr()
              
     ),
@@ -333,14 +360,14 @@ ui <- fluidPage(
                              label = h5("Initial Biomass"),
                              min = 1000,
                              max = 9000,
-                             value = 3000,
+                             value = 9000,
                              step = 500),
                  
                  sliderInput("growth",
                              label = h5("Growth Rate"),
                              min = 0.1,
                              max = 1.0,
-                             value = 0.4,
+                             value = 1.0,
                              step = 0.05),
                  
                  sliderInput("clim",
@@ -361,21 +388,27 @@ ui <- fluidPage(
                              label = h5("Sampling Error"),
                              min = 0,
                              max = 0.5,
-                             value = 0.1,
+                             value = 0.5,
                              step = 0.05),
                  
                  sliderInput("hcr",
-                             label = h5("Harvest Control Rules"),
+                             label = h5("Harvest Control Rule"),
                              min = 0.5,
                              max = 0.95,
-                             value = 0.80,
+                             value = 0.95,
                              step = 0.05),
                  
                  actionButton(inputId = "param",
                               label = h5("Set Parameters")),
-  
+                 
+                 br(),
+                 br(),
+                 
                  actionButton(inputId = "run",
                               label = h5("Run Model")),
+                 
+                 br(),
+                 br(),
                  
                  checkboxInput(inputId = "graph",
                               "Graph")),
