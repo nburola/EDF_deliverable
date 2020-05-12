@@ -324,9 +324,11 @@ ui <- fluidPage(
     tabPanel("Model",
              sidebarLayout(
                sidebarPanel(
+                 
                  selectInput("ai",
                              label = h5("Assessment Interval"),
                              choices = c("20", "15", "10", "5", "1")),
+                 
                  sliderInput("bio",
                              label = h5("Initial Biomass"),
                              min = 1000,
@@ -369,13 +371,16 @@ ui <- fluidPage(
                              value = 0.80,
                              step = 0.05),
                  
-                 radioButtons("model_type",
-                              label = h5("Model Type"),
-                              choices = c("Closures" = "close",
-                                          "No Closures" = "noclose"),
-                              selected = c("close")),
-                 actionButton("run",
-                              label = h5("Run"))),
+                 actionButton(inputId = "param",
+                              label = h5("Set Parameters")),
+  
+                 actionButton(inputId = "run",
+                              label = h5("Run Model")),
+                 
+                 checkboxInput(inputId = "graph",
+                              "Graph")),
+                  
+                 
                
             mainPanel(plotOutput("model"))
       )
@@ -716,80 +721,61 @@ ai_all <- ggplot(ai_all_g, aes(x = assessment_interval, y = prop_good, fill = re
 ##############Model Tab
   
 ######Functions
-  
-output$model <- eventReactive(input$run, {
 
-inputs <- reactiveValues()
-  
-inputs$ai <- input$ai
+observeEvent(input$param, {
+  bio <<- as.numeric(input$bio)
+})
 
-inputs$bio <- input$bio
+observeEvent(input$param, {
+  growth <<- as.numeric(input$growth)
+})
 
-inputs$growth <- input$growth
+observeEvent(input$param, {
+  clim <<- as.numeric(input$clim)
+})
 
-inputs$clim <- input$clim
-  
-inputs$clim_assump <- input$clim_assump
+observeEvent(input$param, {
+  clim_assump <<- as.numeric(input$clim_assump)
+})
 
-inputs$error <- input$error
+observeEvent(input$param, {
+  error <<- as.numeric(input$error)
+})
 
-inputs$hcr <- input$hcr
+observeEvent(input$param, {
+  hcr <<- as.numeric(input$hcr)
+})
 
-inputs$ai <- as.numeric(inputs$ai)
+observeEvent(input$param, {
+  ai <<- as.numeric(input$ai)
+})
 
-inputs$bio <- as.numeric(inputs$bio)
+observeEvent(input$run, {
+  assess <<- seq(ai, 100, ai)
+  sim_close <<- sim_closure(b = bio, r = growth, r_s = clim, r_p_s = clim_assump, error = error, hcr = hcr) %>% 
+    mutate(id = rep("1", 100))
+  sim_noclose <<- sim_fishery(b = bio, r = growth, r_s = clim, r_p_s = clim_assump, error = error, hcr = hcr) %>% 
+    mutate(id = rep("2", 100))
+  sim_both <<- rbind(sim_close, sim_noclose)
+})
 
-inputs$growth <- as.numeric(inputs$growth)
-
-inputs$clim <- as.numeric(inputs$clim)
-
-inputs$clim_assump <- as.numeric(inputs$clim_assump)
-
-inputs$error <- as.numeric(inputs$error)
-
-inputs$hcr <- as.numeric(inputs$hcr)
-
-assess_int <- list(int(x = inputs$ai))
-  
-#Closure Model
-sim_close <- sim_closure(b = inputs$bio, r = inputs$growth, r_s = inputs$clim, r_p_s = inputs$clim_assump, error = inputs$error, hcr = inputs$hcr)
-
-#No Closure Model
-sim_noclose <- sim_fishery(b = inputs$bio, r = inputs$growth, r_s = inputs$clim, r_p_s = inputs$clim_assump, error = inputs$error, hcr = inputs$hcr)
-
-######Graphs
-
-#Closure Graph
-close_graph <- ggplot(sim_close, aes(x = year, y = b)) +
-    geom_line(aes(color = "#079EDF"), size = 1) +
-    scale_color_manual(values = c("#079EDF"), name = "Model Type", labels = c("Closures"))+
-    theme_light() +
-    coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
-    labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
-    theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
-          legend.text=element_text(size=12), legend.background = element_blank(),
-          legend.box.background = element_blank())
-
-#No Closure Graph
-noclose_graph <- ggplot(sim_noclose, aes(x = year, y = b)) +
-    geom_line(aes(color = "#B8CE55"), size = 1) +
-    scale_color_manual(values = c("#B8CE55"), name = "Model Type", labels = c("No Closures"))+
-    theme_light() +
-    coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
-    labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
-    theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
-          legend.text=element_text(size=12), legend.background = element_blank(),
-          legend.box.background = element_blank())
 
 ######Outputs
 
-
-  renderPlot({
-  if(req(input$model_type) == "close"){print(close_graph())}
-  if(req(input$model_type) == "noclose"){print(noclose_graph())}
+output$model <- renderPlot({
+  if(req(input$graph) == TRUE){
+    both_graph <- ggplot(sim_both, aes(x = year, y = b, group = id)) +
+      geom_line(aes(color = id), size = 1) +
+      scale_color_manual(values = c("#079EDF", "#B8CE55"), name = "Model Type", labels = c("Closures", "No Closures"))+
+      theme_light() +
+      coord_cartesian( ylim=c(0,10000), expand = FALSE ) +
+      labs(title = "FISHE Mangement", x = "Year", y = "Biomass")+
+      theme(legend.key = element_rect(fill = "transparent", colour = "transparent"), axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 15), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
+            legend.text=element_text(size=12), legend.background = element_blank(),
+            legend.box.background = element_blank())
+   
+    print(both_graph)}
   })
-})
-
 }
 
 shinyApp(ui = ui, server = server)

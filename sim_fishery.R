@@ -63,7 +63,7 @@ sim_fishery <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
   
   ## If the fishery is over the limit 
   if(results$f_ratio_err[1] >= 2){
-    results$f[1] = f_int #keep fishing pressure but adjust catch for that year to reflect "near closure"
+    results$f[1] = f_int*hcr #keep fishing pressure but adjust catch for that year to reflect "near closure"
   } 
   ## If the fishery is between the target and the limit 
   if(results$f_ratio_err[1] > 1.1 & results$f_ratio_err[1] < 2){
@@ -99,7 +99,7 @@ sim_fishery <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
   for (t in 2:years) {
  
 # Assessment year results: 
-      if(results$year[t] %in% assess_int){
+      if(results$year[t] %in% assess){
       
       # Growth rates:
       ## Calculate change to growth rate based on climate change 
@@ -163,7 +163,7 @@ sim_fishery <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
     } 
     
 # Non-assessment year results: 
-    if(results$year[t] %not_in% assess_int){
+    if(results$year[t] %not_in% assess){
       # Calculate growth rates - still update based on yearly changes
       results$r[t] = results$r[t-1] + (r_s*results$r[t-1])
       results$r_p[t] = results$r_p[t-1] + (r_p_s*results$r_p[t-1])

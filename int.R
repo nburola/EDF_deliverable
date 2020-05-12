@@ -1,6 +1,6 @@
 int <- function(x){
   assess_int <- seq(x, 100, x)
-  return(list(assess_int))
+  return(assess_int)
 }
 
 

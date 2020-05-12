@@ -81,7 +81,7 @@ sim_closure <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
   # Calculate catch
   ## Adjust catch if the f_ratio was over the limit to simulate "near closure"
   if(results$f_ratio_err[1] >= 2){
-    results$c[1] = results$f[1] * results$b[1] * 0.05 #only keep 95% of the catch 
+    results$c[1] = results$f[1] * results$b[1] * 0.05 #only keep 5% of the catch 
   } 
   ## If there are no adjustments simply use b*f 
   if(results$f_ratio_err[1] < 2){
@@ -99,7 +99,7 @@ sim_closure <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
   for (t in 2:years) {
     
     # Assessment year results: 
-    if(results$year[t] %in% assess_int){
+    if(results$year[t] %in% assess){
       
       # Growth rates:
       ## Calculate change to growth rate based on climate change 
@@ -163,7 +163,7 @@ sim_closure <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
     } 
     
     # Non-assessment year results: 
-    if(results$year[t] %not_in% assess_int){
+    if(results$year[t] %not_in% assess){
       # Calculate growth rates - still update based on yearly changes
       results$r[t] = results$r[t-1] + (r_s*results$r[t-1])
       results$r_p[t] = results$r_p[t-1] + (r_p_s*results$r_p[t-1])
