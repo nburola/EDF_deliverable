@@ -131,7 +131,7 @@ sim_fishery <- function(b, r, r_s, r_p_s, error, p=0.2, k=10000, years=100, hcr)
       # Decide how to change f based on the f_ratio estimate with error
       ## If the fishery is over the limit 
       if(results$f_ratio_err[t] >= 2){
-        results$f[t] = results$f[t-1]  #keep fishing pressure but adjust catch for that year to reflect "near closure"
+        results$f[t] = hcr*results$f[t-1]  #keep fishing pressure but adjust catch for that year to reflect "near closure"
       } 
       ## If the fishery is between the target and the limit 
       if(results$f_ratio_err[t] > 1.1 & results$f_ratio_err[t] < 2){
