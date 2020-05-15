@@ -5,9 +5,9 @@ account: somefinfishe
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 2288181
-bundleId: 3148308
+bundleId: 3152643
 url: https://somefinfishe.shinyapps.io/SomefinFishE/
-when: 1589481214.79886
+when: 1589561684.16206
 asMultiple: FALSE
 asStatic: FALSE
 ignoredFiles: 244_app.R|Chase Exploratory.Rmd|int.R|nate_updates.R|test.R|ppt/.DS_Store|ppt/FISHE_Shiny_App_Project_Outline_vf.pptx|ppt/how-to-start-shiny-part-1.pdf|ppt/how-to-start-shiny-part-2.pdf|ppt/how-to-start-shiny-part-3 (1).pdf|www/EDF.png|www/FISHE.png|www/parameters.png|www/vulnerable.png

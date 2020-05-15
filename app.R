@@ -329,7 +329,7 @@ ui <- fluidPage(
               sidebarPanel(
                 radioButtons(inputId = "metric",
                              label = h4("Management Action"),
-                             choices = c("Harvest Control Rule" = "hcr", 
+                             choices = c("Fishing Reduction" = "hcr", 
                                          "Sampling Error" = "err",
                                          "Assessment Interval" = "ai")),
                 
@@ -436,7 +436,7 @@ hcr_none <- ggplot(hcr_none_g, aes(x = hcr, y = prop_good)) +
     theme_light()+
     coord_cartesian( ylim=c(0,1), expand = FALSE ) +
     scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-    labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+    labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
     theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
           legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
           legend.box.background = element_blank(),
@@ -449,7 +449,7 @@ hcr_perf <- ggplot(hcr_perf_g, aes(x = hcr, y = prop_good)) +
   theme_light()+
   coord_cartesian( ylim=c(0,1), expand = FALSE ) +
   scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
         legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
         legend.box.background = element_blank(),
@@ -462,7 +462,7 @@ hcr_proxy <- ggplot(hcr_proxy_g, aes(x = hcr, y = prop_good)) +
   theme_light()+
   coord_cartesian( ylim=c(0,1), expand = FALSE ) +
   scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
         legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
         legend.box.background = element_blank(),
@@ -476,7 +476,7 @@ hcr_none_perf <- ggplot(hcr_none_perf_g, aes(x = hcr, y = prop_good, fill = resp
   theme_light()+
   coord_cartesian( ylim=c(0,1), expand = FALSE ) +
   scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
         legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
         legend.box.background = element_blank(),
@@ -504,7 +504,7 @@ hcr_perf_proxy <- ggplot(hcr_perf_proxy_g, aes(x = hcr, y = prop_good, fill = re
   theme_light()+
   coord_cartesian( ylim=c(0,1), expand = FALSE ) +
   scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
         legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
         legend.box.background = element_blank(),
@@ -518,7 +518,7 @@ hcr_all <- ggplot(hcr_all_g, aes(x = hcr, y = prop_good, fill = response)) +
   theme_light()+
   coord_cartesian( ylim=c(0,1), expand = FALSE ) +
   scale_x_reverse(labels=c("0.5" = "50%","0.6" = "40%" ,"0.7" = "30%","0.8" = "20%","0.9" = "10%","1.0" = "0%")) +
-  labs(title = "Harvest Control Rule", x = "Reduction Amount (%)", y = "Proportion Healthy")+
+  labs(title = "Fishing Reduction", x = "Reduction Amount (%)", y = "Proportion Healthy")+
   theme(axis.text.x=element_text(size=15), axis.text.y=element_text(size=15), plot.title = element_text(hjust = 0.5, face = "bold", size = 20), axis.title.x = element_text(face = "bold", size = 15), axis.title.y = element_text(face = "bold", size = 15), legend.title.align=0.5, panel.background = element_rect(fill = "transparent",colour = NA), plot.background = element_rect(fill = "transparent",colour = NA), legend.title=element_text(size=15), 
         legend.text=element_text(size=12),legend.key = element_rect(fill = "transparent", colour = "transparent"), legend.background = element_blank(),
         legend.box.background = element_blank(),
